@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de chaves VAPID</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 24px;
+      background: #111;
+      color: #fff;
+    }
+
+    h1 {
+      font-size: 28px;
+    }
+
+    button {
+      width: 100%;
+      padding: 16px;
+      margin: 12px 0;
+      border: 0;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .key {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 14px;
+      margin: 8px 0 20px;
+      border-radius: 10px;
+      background: #222;
+      color: #fff;
+      border: 1px solid #555;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .warning {
+      padding: 14px;
+      background: #3a2500;
+      border-radius: 10px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>Gerador de chaves VAPID</h1>
+
+  <p>
+    Gere um par de chaves VAPID para usar no seu sistema de notificações Push.
+  </p>
+
+  <button onclick="generateKeys()">Gerar novas chaves</button>
+
+  <h3>VAPID Public Key</h3>
+  <textarea id="publicKey" class="key" rows="5" readonly></textarea>
+
+  <h3>VAPID Private Key</h3>
+  <textarea id="privateKey" class="key" rows="5" readonly></textarea>
+
+  <div class="warning">
+    ⚠️ Nunca compartilhe a VAPID Private Key com ninguém.
+  </div>
+
+  <script>
+    function base64url(bytes) {
+      let binary = "";
+      for (const byte of bytes) {
+        binary += String.fromCharCode(byte);
+      }
+
+      return btoa(binary)
+        .replace(/\+/g, "-")
+        .replace(/\//g, "_")
+        .replace(/=+$/, "");
+    }
+
+    async function generateKeys() {
+      try {
+        const keyPair = await crypto.subtle.generateKey(
+          {
+            name: "ECDSA",
+            namedCurve: "P-256"
+          },
+          true,
+          ["sign", "verify"]
+        );
+
+        const publicJwk = await crypto.subtle.exportKey(
+          "jwk",
+          keyPair.publicKey
+        );
+
+        const privateJwk = await crypto.subtle.exportKey(
+          "jwk",
+          keyPair.privateKey
+        );
+
+        const x = Uint8Array.from(
+          atob(publicJwk.x.replace(/-/g, "+").replace(/_/g, "/") + "=="),
+          c => c.charCodeAt(0)
+        );
+
+        const y = Uint8Array.from(
+          atob(publicJwk.y.replace(/-/g, "+").replace(/_/g, "/") + "=="),
+          c => c.charCodeAt(0)
+        );
+
+        const publicBytes = new Uint8Array(65);
+        publicBytes[0] = 4;
+        publicBytes.set(x, 1);
+        publicBytes.set(y, 33);
+
+        document.getElementById("publicKey").value =
+          base64url(publicBytes);
+
+        const privateBytes = Uint8Array.from(
+          atob(privateJwk.d.replace(/-/g, "+").replace(/_/g, "/") + "=="),
+          c => c.charCodeAt(0)
+        );
+
+        document.getElementById("privateKey").value =
+          base64url(privateBytes);
+
+      } catch (error) {
+        alert("Erro ao gerar as chaves: " + error.message);
+      }
+    }
+  </script>
+
+</body>
+</html>
