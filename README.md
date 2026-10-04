@@ -61,3 +61,4 @@ Não compartilhe `VAPID_PRIVATE_KEY`. Ela deve ficar somente nas variáveis de a
 ## Observação sobre segurança
 
 Para o primeiro teste, o endpoint `/api/send` pode ser protegido definindo `ADMIN_TOKEN`. Se você definir essa variável, a chamada do navegador também precisará enviar esse token; a interface desta primeira versão ainda não possui um campo para ele. Para um teste inicial privado, deixe o site protegido por controle de acesso do próprio Netlify ou adicione autenticação antes de expor o endpoint.
+Configuração atualizada.
